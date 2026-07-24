@@ -1,1 +1,1 @@
-# VaultPad
+# VaultPad - Secure File Storage Platform
