@@ -1,0 +1,19 @@
+# VaultPad — Render Deployment Configuration
+# https://render.com/docs/render-yaml
+
+services:
+  - type: web
+    name: vaultpad
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: node app.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8050
+      - key: MONGODB_URI
+        sync: false
