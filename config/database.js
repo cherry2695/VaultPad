@@ -3,42 +3,29 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
   const MONGODB_URI = process.env.MONGODB_URI;
   if (!MONGODB_URI) {
-    console.error('MONGODB_URI environment variable is not set!');
-    process.exit(1);
+    throw new Error('MONGODB_URI environment variable is not set');
   }
 
-  try {
-    // Removed deprecated useNewUrlParser and useUnifiedTopology (not needed in Mongoose 8+)
-    const conn = await mongoose.connect(MONGODB_URI);
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+  // Removed deprecated useNewUrlParser / useUnifiedTopology (no-ops in Mongoose 8+)
+  const conn = await mongoose.connect(MONGODB_URI);
+  console.log(`✅  MongoDB connected: ${conn.connection.host}`);
 
-    mongoose.connection.on('error', (err) => {
-      console.error('Mongoose connection error:', err.message);
-    });
+  mongoose.connection.on('error', (err) => {
+    console.error('Mongoose connection error:', err.message);
+  });
 
-    mongoose.connection.on('disconnected', () => {
-      console.warn('⚠️  Mongoose disconnected — will attempt to reconnect automatically');
-    });
+  mongoose.connection.on('disconnected', () => {
+    console.warn('⚠️  Mongoose disconnected — reconnecting automatically...');
+  });
 
-    // Graceful shutdown
-    const gracefulExit = async () => {
-      try {
-        await mongoose.connection.close();
-        console.log('Mongoose connection closed on app termination');
-      } catch (err) {
-        console.error('Error closing mongoose connection:', err);
-      } finally {
-        process.exit(0);
-      }
-    };
-
-    process.on('SIGINT',  gracefulExit);
-    process.on('SIGTERM', gracefulExit);
-
-  } catch (error) {
-    console.error(`❌ Error connecting to MongoDB: ${error.message}`);
-    process.exit(1);
-  }
+  // Graceful shutdown on process signals
+  const gracefulExit = async () => {
+    try { await mongoose.connection.close(); } catch (_) {}
+    console.log('Mongoose connection closed on app termination');
+    process.exit(0);
+  };
+  process.on('SIGINT',  gracefulExit);
+  process.on('SIGTERM', gracefulExit);
 };
 
 module.exports = { connectDB };

@@ -12,6 +12,7 @@ window.EditorManager = {
   saveTimeout: null,
   category: 'notes',
   workspaceId: null,
+  pendingSelectId: null,   // set by selectNoteById when notes haven't loaded yet
 
   configs: {
     notes:      { lang: null,         showGutter: false, monospace: false },
@@ -146,6 +147,13 @@ window.EditorManager = {
       this.notes = data.data || [];
       this.renderList();
 
+      // If navigateToNote() set a pending ID, select that note now
+      if (this.pendingSelectId) {
+        const target = this.notes.find(n => n._id === this.pendingSelectId);
+        this.pendingSelectId = null;
+        if (target) { this.selectNote(target); return; }
+      }
+
       if (this.notes.length) {
         this.selectNote(this.notes[0]);
       } else {
@@ -227,7 +235,12 @@ window.EditorManager = {
 
   selectNoteById(id) {
     const note = this.notes.find(n => n._id === id);
-    if (note) this.selectNote(note);
+    if (note) {
+      this.selectNote(note);
+    } else {
+      // Notes haven't loaded yet — store the ID and loadNotes() will pick it up
+      this.pendingSelectId = id;
+    }
   },
 
   showEmptyState() {

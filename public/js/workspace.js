@@ -254,8 +254,9 @@ window.WorkspaceManager = {
   refreshSidebar() { this.loadSidebar(); },
 
   navigateToNote(category, id) {
+    // Set the pending ID BEFORE switching tabs so loadNotes() can pick it up
+    if (window.EditorManager) window.EditorManager.pendingSelectId = id;
     this.switchTab(category);
-    setTimeout(() => window.EditorManager?.selectNoteById(id), 300);
     this.toggleSidebar(false);
   },
 

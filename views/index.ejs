@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VaultPad | Your Private Digital Vault</title>
+    <meta name="description" content="VaultPad — Instantly spin up a secure, blazing-fast workspace for your notes, code, and media. No login required.">
+
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <!-- Tailwind CSS -->
@@ -17,318 +20,634 @@
                 extend: {
                     colors: {
                         primary: { DEFAULT: '#2563EB', light: '#3B82F6', dark: '#1D4ED8' },
-                        navy: '#0F172A',
-                        slate: { bg: '#F0F4FF' }
                     },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    animation: {
+                        'fade-up': 'fadeUp 0.7s ease forwards',
+                        'float':   'float 6s ease-in-out infinite',
                     }
                 }
             }
         }
     </script>
-    <!-- Custom CSS -->
+
+    <!-- Custom CSS + FOUC prevention -->
     <link rel="stylesheet" href="/css/custom.css">
+
+    <style>
+        /* ── Theme variables ──────────────────────────────────────────── */
+        :root {
+            --bg-main:    #F0F4FF;
+            --bg-card:    #FFFFFF;
+            --bg-sidebar: #F8FAFF;
+            --text-primary:   #0F172A;
+            --text-secondary: #475569;
+            --text-muted:     #94A3B8;
+            --border:    #E2E8F0;
+            --primary:   #2563EB;
+            --shadow-xl: 0 20px 60px rgba(0,0,0,.12);
+        }
+        html.dark {
+            --bg-main:    #0A0F1E;
+            --bg-card:    #111827;
+            --bg-sidebar: #0D1526;
+            --text-primary:   #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted:     #64748B;
+            --border:    #1E293B;
+            --shadow-xl: 0 20px 60px rgba(0,0,0,.45);
+        }
+
+        /* ── Smooth colour transitions on ALL elements ─────────────────── */
+        *, *::before, *::after {
+            transition: background-color .35s ease, border-color .35s ease, color .25s ease;
+            box-sizing: border-box;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(--text-primary); }
+
+        /* ── Floating blobs ───────────────────────────────────────────── */
+        .blob {
+            position: absolute; border-radius: 50%;
+            filter: blur(60px); pointer-events: none; z-index: 0;
+        }
+        .blob-1 { width:520px;height:520px; background:rgba(37,99,235,.18);  top:-10%; left:-8%;  animation: floatBlob 10s ease-in-out infinite; }
+        .blob-2 { width:420px;height:420px; background:rgba(147,51,234,.14); bottom:-8%;right:-6%; animation: floatBlob 13s ease-in-out infinite reverse; }
+        .blob-3 { width:280px;height:280px; background:rgba(56,189,248,.16);  top:40%;  right:14%; animation: floatBlob 9s ease-in-out infinite 2s; }
+
+        @keyframes floatBlob {
+            0%,100% { transform: translateY(0)   rotate(0deg); }
+            50%      { transform: translateY(-28px) rotate(6deg); }
+        }
+
+        /* ── Hero mockup container ────────────────────────────────────── */
+        .mockup-window {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow-xl), 0 0 0 1px rgba(255,255,255,.04);
+            overflow: hidden;
+            position: relative;
+        }
+        .mockup-titlebar {
+            height: 38px;
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; padding: 0 16px; gap: 8px;
+        }
+        .dot { width:12px;height:12px;border-radius:50%; }
+        .dot-r { background:#FF5F57; } .dot-y { background:#FFBD2E; } .dot-g { background:#28CA41; }
+
+        /* ── Feature card hover ───────────────────────────────────────── */
+        .feature-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 2rem;
+            transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease !important;
+        }
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 24px 48px rgba(37,99,235,.12);
+            border-color: rgba(37,99,235,.3);
+        }
+
+        /* ── Theme toggle button ─────────────────────────────────────── */
+        .theme-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-main); border: 1px solid var(--border);
+            color: var(--text-secondary); cursor: pointer;
+            font-size: 15px;
+            transition: background .25s, border-color .25s, color .2s, transform .2s !important;
+        }
+        .theme-btn:hover { color: var(--primary); transform: rotate(15deg) scale(1.12); }
+
+        /* ── Input focus glow ────────────────────────────────────────── */
+        .vault-input { outline: none; background: transparent; border: none; }
+        .vault-input:focus { box-shadow: none; }
+
+        /* ── Toast ───────────────────────────────────────────────────── */
+        .toast { animation: toastIn .3s ease; }
+        @keyframes toastIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ── Animate fade up ─────────────────────────────────────────── */
+        @keyframes fadeUp { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+        .anim-1 { opacity:0; animation: fadeUp .8s ease .1s forwards; }
+        .anim-2 { opacity:0; animation: fadeUp .8s ease .3s forwards; }
+        .anim-3 { opacity:0; animation: fadeUp .8s ease .5s forwards; }
+
+        /* ── Navbar scroll shadow ────────────────────────────────────── */
+        nav { transition: box-shadow .3s; }
+        nav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,.08); }
+        html.dark nav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,.3); }
+
+        /* ── Mockup image ────────────────────────────────────────────── */
+        .hero-img { width:100%; height:100%; object-fit:cover; display:block; }
+
+        /* ── Step connector line  ────────────────────────────────────── */
+        .step-line { background: var(--border); }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:10px; }
+    </style>
 </head>
-<body class="bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-300 antialiased overflow-x-hidden">
-    <!-- Navbar -->
-    <nav class="fixed w-full z-50 bg-[var(--bg-card)]/80 backdrop-blur-md border-b border-[var(--border)] transition-colors duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center gap-2 cursor-pointer">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-light to-primary flex items-center justify-center text-white font-bold text-xl shadow-lg">V</div>
-                    <span class="font-bold text-xl tracking-tight">VaultPad</span>
-                </div>
-                
-                <div class="hidden md:flex space-x-8 items-center">
-                    <a href="#features" class="text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium transition-colors">Features</a>
-                    <a href="#how-it-works" class="text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium transition-colors">How it Works</a>
-                    <a href="https://github.com" target="_blank" class="text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium transition-colors">
-                        <i class="fa-brands fa-github text-xl"></i>
-                    </a>
-                    
-                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-[var(--bg-main)] text-[var(--text-secondary)] transition-colors">
-                        <i class="fa-solid fa-moon"></i>
-                    </button>
-                    
-                    <a href="#cta-section" class="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-full font-medium transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                        Open Vault
-                    </a>
-                </div>
-                
-                <div class="md:hidden flex items-center gap-4">
-                    <button id="theme-toggle-mobile" class="p-2 text-[var(--text-secondary)]">
-                        <i class="fa-solid fa-moon"></i>
-                    </button>
-                    <button class="text-[var(--text-primary)]">
-                        <i class="fa-solid fa-bars text-xl"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
 
-    <!-- Hero Section -->
-    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden hero-bg">
-        <div class="floating-shape shape-1"></div>
-        <div class="floating-shape shape-2"></div>
-        <div class="floating-shape shape-3"></div>
-        
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div class="text-center lg:text-left animate-fade-in-up">
-                    <div class="inline-block px-4 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-primary font-medium text-sm mb-6 border border-blue-200 dark:border-blue-800">
-                        ✨ Redefining private workspaces
-                    </div>
-                    <h1 class="text-5xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
-                        Your Private <br>
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-500">Digital Vault</span>
-                    </h1>
-                    <p class="text-lg text-[var(--text-secondary)] mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                        Instantly spin up a secure, blazing-fast workspace for your notes, code, and media. No login required. End-to-end encrypted feel.
-                    </p>
-                    
-                    <div class="max-w-md mx-auto lg:mx-0 bg-[var(--bg-card)] p-2 rounded-2xl shadow-xl border border-[var(--border)] flex items-center relative">
-                        <input type="text" id="workspace-code" placeholder="Enter a secret code..." class="w-full bg-transparent border-none px-4 py-3 text-lg focus:ring-0 focus:outline-none text-[var(--text-primary)] placeholder-[var(--text-muted)]">
-                        <button id="enter-workspace-btn" class="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl font-medium transition-all shadow-md flex-shrink-0 flex items-center gap-2">
-                            <span>Enter</span>
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                        <div id="workspace-error" class="absolute -bottom-8 left-4 text-red-500 text-sm hidden">Code must be at least 3 characters</div>
-                    </div>
-                    
-                    <p class="text-sm text-[var(--text-muted)] mt-4">
-                        <i class="fa-solid fa-lock text-xs mr-1"></i> 100% private and secure
-                    </p>
-                </div>
-                
-                <div class="relative hidden lg:block animate-fade-in-up" style="animation-delay: 0.2s;">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-purple-500/20 rounded-3xl blur-3xl transform rotate-3"></div>
-                    <div class="relative bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden glass-panel">
-                        <div class="h-8 bg-[var(--bg-sidebar)] border-b border-[var(--border)] flex items-center px-4 gap-2">
-                            <div class="w-3 h-3 rounded-full bg-red-400"></div>
-                            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
-                            <div class="w-3 h-3 rounded-full bg-green-400"></div>
-                        </div>
-                        <div class="p-6 h-[400px] flex">
-                            <div class="w-1/3 border-r border-[var(--border)] pr-4 space-y-3">
-                                <div class="h-2 bg-[var(--text-muted)]/20 rounded w-full"></div>
-                                <div class="h-2 bg-[var(--text-muted)]/20 rounded w-5/6"></div>
-                                <div class="h-2 bg-[var(--text-muted)]/20 rounded w-4/6"></div>
-                                <div class="mt-8 h-2 bg-primary/40 rounded w-full"></div>
-                                <div class="h-2 bg-[var(--text-muted)]/20 rounded w-5/6"></div>
-                            </div>
-                            <div class="w-2/3 pl-6 space-y-4">
-                                <div class="h-6 bg-[var(--text-muted)]/20 rounded w-1/2 mb-8"></div>
-                                <div class="h-2 bg-[var(--text-muted)]/20 rounded w-full"></div>
-                                <div class="h-2 bg-[var(--text-muted)]/20 rounded w-full"></div>
-                                <div class="h-2 bg-[var(--text-muted)]/20 rounded w-5/6"></div>
-                                <div class="h-2 bg-[var(--text-muted)]/20 rounded w-full"></div>
-                                <div class="h-2 bg-[var(--text-muted)]/20 rounded w-4/6"></div>
-                                <div class="w-full h-32 bg-[var(--bg-main)] rounded-lg mt-6 flex items-center justify-center">
-                                    <i class="fa-regular fa-image text-4xl text-[var(--text-muted)]/30"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+<!--  Apply theme BEFORE paint to prevent flash  -->
+<script>
+    (function(){
+        var saved = localStorage.getItem('vp-theme');
+        var sysDark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+        var theme = saved || (sysDark ? 'dark' : 'light');
+        if(theme === 'dark') document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', theme);
+    })();
+</script>
 
-    <!-- Stats Section -->
-    <section class="py-12 border-y border-[var(--border)] bg-[var(--bg-card)]">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 divide-x divide-[var(--border)]/50">
-                <div class="text-center stats-card">
-                    <div class="text-3xl font-bold text-[var(--text-primary)] mb-1 stat-number" data-target="10"><0</div>
-                    <div class="text-sm text-[var(--text-secondary)] font-medium">Ultra Fast ms</div>
-                </div>
-                <div class="text-center stats-card">
-                    <div class="text-3xl font-bold text-[var(--text-primary)] mb-1">Zero</div>
-                    <div class="text-sm text-[var(--text-secondary)] font-medium">Registration</div>
-                </div>
-                <div class="text-center stats-card">
-                    <div class="text-3xl font-bold text-[var(--text-primary)] mb-1">100%</div>
-                    <div class="text-sm text-[var(--text-secondary)] font-medium">Private</div>
-                </div>
-                <div class="text-center stats-card">
-                    <div class="text-3xl font-bold text-[var(--text-primary)] mb-1">∞</div>
-                    <div class="text-sm text-[var(--text-secondary)] font-medium">Possibilities</div>
-                </div>
-            </div>
-        </div>
-    </section>
+<body class="antialiased overflow-x-hidden">
 
-    <!-- Features Section -->
-    <section id="features" class="py-24 bg-[var(--bg-main)]">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-2xl mx-auto mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Everything you need, nothing you don't</h2>
-                <p class="text-[var(--text-secondary)] text-lg">A powerful suite of tools seamlessly integrated into a beautiful, distraction-free environment.</p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
-                <div class="feature-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] shadow-sm">
-                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-primary rounded-xl flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Auto Save</h3>
-                    <p class="text-[var(--text-secondary)]">Never lose a thought. Every keystroke is automatically saved in real-time as you type.</p>
-                </div>
-                
-                <!-- Feature 2 -->
-                <div class="feature-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] shadow-sm">
-                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-xl flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-code"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Developer Friendly</h3>
-                    <p class="text-[var(--text-secondary)]">Dedicated editors for Python, Java, C++, SQL, JS, HTML, and CSS with syntax highlighting.</p>
-                </div>
-                
-                <!-- Feature 3 -->
-                <div class="feature-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] shadow-sm">
-                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-xl flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-images"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Media Storage</h3>
-                    <p class="text-[var(--text-secondary)]">Drag and drop images, videos, PDFs, and office documents directly into your workspace.</p>
-                </div>
-                
-                <!-- Feature 4 -->
-                <div class="feature-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] shadow-sm">
-                    <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 text-orange-600 rounded-xl flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Version History</h3>
-                    <p class="text-[var(--text-secondary)]">Access past versions of your notes and restore them with a single click.</p>
-                </div>
-                
-                <!-- Feature 5 -->
-                <div class="feature-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] shadow-sm">
-                    <div class="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 text-pink-600 rounded-xl flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Instant Search</h3>
-                    <p class="text-[var(--text-secondary)]">Find anything in milliseconds with our powerful global search across all notes and files.</p>
-                </div>
-                
-                <!-- Feature 6 -->
-                <div class="feature-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] shadow-sm">
-                    <div class="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 text-teal-600 rounded-xl flex items-center justify-center text-xl mb-6">
-                        <i class="fa-solid fa-book-open"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Reading Mode</h3>
-                    <p class="text-[var(--text-secondary)]">Immerse yourself in your content with a distraction-free, beautifully typed reading view.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- ═══════════════════════ NAVBAR ═══════════════════════════════════════ -->
+<nav id="navbar" class="fixed w-full z-50 bg-white border-b border-gray-200"
+     style="box-shadow: 0 1px 4px rgba(0,0,0,.06);">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
 
-    <!-- How it Works Section -->
-    <section id="how-it-works" class="py-24 bg-[var(--bg-card)]">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-2xl mx-auto mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">How it works</h2>
-                <p class="text-[var(--text-secondary)] text-lg">Three simple steps to your private productivity vault.</p>
+            <!-- Logo -->
+            <div class="flex items-center gap-2.5 cursor-pointer select-none">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-blue-500/30">V</div>
+                <span class="font-bold text-[19px] tracking-tight text-slate-900">VaultPad</span>
             </div>
-            
-            <div class="relative max-w-4xl mx-auto">
-                <!-- Connector Line -->
-                <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-[var(--border)] -translate-y-1/2 z-0"></div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
-                    <!-- Step 1 -->
-                    <div class="text-center">
-                        <div class="w-16 h-16 mx-auto bg-[var(--bg-card)] border-2 border-primary rounded-full flex items-center justify-center text-2xl font-bold text-primary mb-6 shadow-lg shadow-primary/20">1</div>
-                        <h3 class="text-xl font-bold mb-2">Create a Code</h3>
-                        <p class="text-[var(--text-secondary)]">Think of any unique phrase, word, or string of characters.</p>
-                    </div>
-                    
-                    <!-- Step 2 -->
-                    <div class="text-center">
-                        <div class="w-16 h-16 mx-auto bg-[var(--bg-card)] border-2 border-primary rounded-full flex items-center justify-center text-2xl font-bold text-primary mb-6 shadow-lg shadow-primary/20">2</div>
-                        <h3 class="text-xl font-bold mb-2">Enter Vault</h3>
-                        <p class="text-[var(--text-secondary)]">Type it in. If it exists, you're in. If it doesn't, we create it instantly.</p>
-                    </div>
-                    
-                    <!-- Step 3 -->
-                    <div class="text-center">
-                        <div class="w-16 h-16 mx-auto bg-[var(--bg-card)] border-2 border-primary rounded-full flex items-center justify-center text-2xl font-bold text-primary mb-6 shadow-lg shadow-primary/20">3</div>
-                        <h3 class="text-xl font-bold mb-2">Start Working</h3>
-                        <p class="text-[var(--text-secondary)]">Write notes, write code, upload files. Everything is saved automatically.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- CTA Section -->
-    <section id="cta-section" class="py-24 relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-br from-primary to-purple-700"></div>
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CgkJPGc+CgkJCTxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIi8+CgkJPC9nPgoJPC9zdmc+')] opacity-50"></div>
-        
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-            <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Ready to enter your vault?</h2>
-            <p class="text-blue-100 text-xl mb-10 max-w-2xl mx-auto">No credit card, no sign up, no tracking. Just pure productivity.</p>
-            
-            <div class="max-w-md mx-auto bg-white/10 backdrop-blur-md p-2 rounded-2xl shadow-2xl border border-white/20 flex items-center">
-                <input type="text" id="workspace-code-bottom" placeholder="Enter a secret code..." class="w-full bg-transparent border-none px-4 py-3 text-lg focus:ring-0 focus:outline-none text-white placeholder-blue-200">
-                <button id="enter-workspace-btn-bottom" class="bg-white text-primary hover:bg-blue-50 px-6 py-3 rounded-xl font-bold transition-colors shadow-md flex-shrink-0">
+            <!-- Desktop nav -->
+            <div class="hidden md:flex items-center gap-6">
+                <a href="#features"    class="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Features</a>
+                <a href="#how-it-works" class="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">How it Works</a>
+                <a href="https://github.com" target="_blank" class="text-slate-500 hover:text-slate-900 transition-colors">
+                    <i class="fa-brands fa-github text-xl"></i>
+                </a>
+
+                <!-- Theme toggle -->
+                <button id="theme-toggle" data-theme-btn class="theme-btn" aria-label="Toggle theme">
+                    <i id="theme-icon" data-theme-icon class="fa-solid fa-moon"></i>
+                </button>
+
+                <a href="#cta-section" class="bg-primary hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-full font-semibold transition-all shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-px">
                     Open Vault
+                </a>
+            </div>
+
+            <!-- Mobile nav -->
+            <div class="md:hidden flex items-center gap-3">
+                <button id="theme-toggle-mobile" data-theme-btn class="theme-btn" aria-label="Toggle theme">
+                    <i id="theme-icon-mobile" data-theme-icon class="fa-solid fa-moon"></i>
+                </button>
+                <button class="p-2 text-[var(--text-primary)]">
+                    <i class="fa-solid fa-bars text-xl"></i>
                 </button>
             </div>
         </div>
-    </section>
+    </div>
+</nav>
 
-    <!-- Footer -->
-    <footer class="bg-[var(--bg-card)] border-t border-[var(--border)] pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-                <div class="col-span-1 md:col-span-2">
-                    <div class="flex items-center gap-2 mb-4">
-                        <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xl">V</div>
-                        <span class="font-bold text-xl tracking-tight">VaultPad</span>
+<!-- ═══════════════════════ HERO ══════════════════════════════════════════ -->
+<section class="relative pt-28 pb-20 lg:pt-44 lg:pb-32 overflow-hidden" style="background:var(--bg-main);">
+    <!-- Blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+
+            <!-- Left: Copy -->
+            <div class="text-center lg:text-left">
+                <div class="anim-1 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-sm font-semibold mb-6"
+                     style="background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.25);color:#2563EB;">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                    Redefining private workspaces
+                </div>
+
+                <h1 class="anim-1 text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight leading-[1.08] mb-6 text-[var(--text-primary)]">
+                    Your Private<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600">
+                        Digital Vault
+                    </span>
+                </h1>
+
+                <p class="anim-2 text-lg text-[var(--text-secondary)] mb-10 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+                    Instantly spin up a secure, blazing-fast workspace for your notes, code, and media.
+                    <strong class="text-[var(--text-primary)] font-semibold">No login required.</strong>
+                </p>
+
+                <!-- Code entry box -->
+                <div class="anim-2 max-w-md mx-auto lg:mx-0">
+                    <div class="flex items-center bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-xl p-1.5 focus-within:border-blue-500 focus-within:shadow-blue-500/15 focus-within:shadow-xl" style="transition:border-color .2s,box-shadow .2s;">
+                        <span class="pl-3 pr-1 text-[var(--text-muted)]"><i class="fa-solid fa-lock text-sm"></i></span>
+                        <input type="text" id="workspace-code"
+                               class="vault-input flex-1 px-3 py-3 text-[15px] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
+                               placeholder="Enter a secret code…"
+                               autocomplete="off" spellcheck="false">
+                        <button id="enter-workspace-btn"
+                                class="bg-primary hover:bg-blue-700 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-500/30 flex items-center gap-2 flex-shrink-0">
+                            Enter <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
                     </div>
-                    <p class="text-[var(--text-secondary)] max-w-md">
-                        A premium, zero-friction workspace for notes, code, and files. Designed for speed, privacy, and simplicity.
+                    <p id="workspace-error" class="hidden text-red-500 text-xs mt-2 pl-2">Code must be at least 3 characters.</p>
+                    <p class="text-xs text-[var(--text-muted)] mt-3 pl-2">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> 100% private · No account needed · Auto-saves everything
                     </p>
                 </div>
-                
-                <div>
-                    <h4 class="font-bold mb-4">Product</h4>
-                    <ul class="space-y-2">
-                        <li><a href="#features" class="text-[var(--text-secondary)] hover:text-primary transition-colors">Features</a></li>
-                        <li><a href="#how-it-works" class="text-[var(--text-secondary)] hover:text-primary transition-colors">How it works</a></li>
-                        <li><a href="#" class="text-[var(--text-secondary)] hover:text-primary transition-colors">Pricing</a></li>
-                    </ul>
+            </div>
+
+            <!-- Right: Mockup -->
+            <div class="anim-3 relative hidden lg:block">
+                <!-- Glow ring behind window -->
+                <div class="absolute -inset-6 bg-gradient-to-tr from-blue-500/20 via-purple-500/10 to-cyan-500/15 rounded-3xl blur-3xl"></div>
+
+                <div class="mockup-window relative z-10">
+                    <!-- Title bar -->
+                    <div class="mockup-titlebar">
+                        <div class="dot dot-r"></div>
+                        <div class="dot dot-y"></div>
+                        <div class="dot dot-g"></div>
+                        <div class="flex-1 flex justify-center">
+                            <div class="px-3 py-0.5 rounded text-xs text-[var(--text-muted)] bg-[var(--bg-main)] border border-[var(--border)] font-mono">
+                                VaultPad — workspace
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Image (full bleed) -->
+                    <div class="w-full" style="height:380px;overflow:hidden;">
+                        <img src="/img/Security.png"
+                             alt="VaultPad secure workspace preview"
+                             class="hero-img"
+                             loading="eager">
+                    </div>
+
+                    <!-- Bottom status bar -->
+                    <div class="px-4 py-2 border-t border-[var(--border)] flex items-center justify-between text-xs text-[var(--text-muted)]" style="background:var(--bg-sidebar);">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block"></span>
+                            Auto-saved · just now
+                        </span>
+                        <span class="font-mono">Python · 42 lines</span>
+                    </div>
                 </div>
-                
-                <div>
-                    <h4 class="font-bold mb-4">Connect</h4>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-[var(--text-secondary)] hover:text-primary transition-colors">GitHub</a></li>
-                        <li><a href="#" class="text-[var(--text-secondary)] hover:text-primary transition-colors">Twitter</a></li>
-                        <li><a href="#" class="text-[var(--text-secondary)] hover:text-primary transition-colors">LinkedIn</a></li>
-                    </ul>
+
+                <!-- Floating badge -->
+                <div class="absolute -bottom-5 -left-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3 z-20">
+                    <div class="w-9 h-9 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600">
+                        <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-[var(--text-primary)]">Auto-saved</div>
+                        <div class="text-[11px] text-[var(--text-muted)]">All changes synced</div>
+                    </div>
+                </div>
+
+                <!-- Floating badge 2 -->
+                <div class="absolute -top-5 -right-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl px-4 py-3 shadow-xl flex items-center gap-3 z-20">
+                    <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                        <i class="fa-solid fa-lock text-sm"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-[var(--text-primary)]">End-to-end</div>
+                        <div class="text-[11px] text-[var(--text-muted)]">bcrypt encrypted</div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="pt-8 border-t border-[var(--border)] flex flex-col md:flex-row justify-between items-center gap-4">
-                <p class="text-[var(--text-muted)] text-sm">© 2026 VaultPad. All rights reserved.</p>
-                <div class="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-                    <span>Designed with</span> <i class="fa-solid fa-heart text-red-500 mx-1"></i> <span>for productivity</span>
+
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ STATS ══════════════════════════════════════════ -->
+<section class="py-12 border-y border-[var(--border)]" style="background:var(--bg-card);">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="text-center">
+                <div class="text-3xl font-extrabold text-[var(--text-primary)] mb-1">&lt;10ms</div>
+                <div class="text-sm text-[var(--text-secondary)] font-medium">Response Time</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-extrabold text-[var(--text-primary)] mb-1">Zero</div>
+                <div class="text-sm text-[var(--text-secondary)] font-medium">Registration</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-extrabold text-[var(--text-primary)] mb-1">100%</div>
+                <div class="text-sm text-[var(--text-secondary)] font-medium">Private</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-extrabold text-[var(--text-primary)] mb-1">∞</div>
+                <div class="text-sm text-[var(--text-secondary)] font-medium">Workspaces</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ FEATURES ══════════════════════════════════════ -->
+<section id="features" class="py-28" style="background:var(--bg-main);">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-20">
+            <p class="text-sm font-semibold text-blue-500 tracking-widest uppercase mb-3">Features</p>
+            <h2 class="text-4xl md:text-5xl font-extrabold text-[var(--text-primary)] mb-5 leading-tight">Everything you need,<br>nothing you don't</h2>
+            <p class="text-lg text-[var(--text-secondary)] leading-relaxed">A powerful suite of tools seamlessly integrated into a beautiful, distraction-free environment.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="feature-card">
+                <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center text-xl mb-5 shadow-sm">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 text-[var(--text-primary)]">Auto Save</h3>
+                <p class="text-[var(--text-secondary)] text-sm leading-relaxed">Never lose a thought. Every keystroke is automatically saved in real-time as you type.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 flex items-center justify-center text-xl mb-5 shadow-sm">
+                    <i class="fa-solid fa-code"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 text-[var(--text-primary)]">Developer Friendly</h3>
+                <p class="text-[var(--text-secondary)] text-sm leading-relaxed">Dedicated editors for Python, Java, C++, SQL, JS, HTML, and CSS with syntax highlighting.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="w-12 h-12 rounded-2xl bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center text-xl mb-5 shadow-sm">
+                    <i class="fa-solid fa-images"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 text-[var(--text-primary)]">Media Storage</h3>
+                <p class="text-[var(--text-secondary)] text-sm leading-relaxed">Drag and drop images, videos, PDFs, Word & Excel files directly into your workspace.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="w-12 h-12 rounded-2xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center text-xl mb-5 shadow-sm">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 text-[var(--text-primary)]">Version History</h3>
+                <p class="text-[var(--text-secondary)] text-sm leading-relaxed">Access the last 20 versions of any note and restore them with a single click.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-900/30 text-pink-600 flex items-center justify-center text-xl mb-5 shadow-sm">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 text-[var(--text-primary)]">Instant Search</h3>
+                <p class="text-[var(--text-secondary)] text-sm leading-relaxed">Find anything in milliseconds with global search across all notes and files (Ctrl+K).</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="w-12 h-12 rounded-2xl bg-teal-100 dark:bg-teal-900/30 text-teal-600 flex items-center justify-center text-xl mb-5 shadow-sm">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 text-[var(--text-primary)]">Reading Mode</h3>
+                <p class="text-[var(--text-secondary)] text-sm leading-relaxed">Immerse yourself in a distraction-free, beautifully typeset reading experience.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ HOW IT WORKS ══════════════════════════════════ -->
+<section id="how-it-works" class="py-28" style="background:var(--bg-card);">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-20">
+            <p class="text-sm font-semibold text-blue-500 tracking-widest uppercase mb-3">Process</p>
+            <h2 class="text-4xl md:text-5xl font-extrabold text-[var(--text-primary)] mb-5">How it works</h2>
+            <p class="text-lg text-[var(--text-secondary)]">Three steps to your private productivity vault.</p>
+        </div>
+
+        <div class="relative">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
+                <div class="text-center">
+                    <div class="w-16 h-16 mx-auto rounded-full border-2 border-blue-500 flex items-center justify-center text-2xl font-extrabold text-blue-500 mb-6 shadow-lg shadow-blue-500/20" style="background:var(--bg-card);">1</div>
+                    <h3 class="text-xl font-bold mb-2 text-[var(--text-primary)]">Create a Code</h3>
+                    <p class="text-[var(--text-secondary)] text-sm leading-relaxed">Think of any unique phrase, word, or string. This becomes your private key.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 mx-auto rounded-full border-2 border-blue-500 flex items-center justify-center text-2xl font-extrabold text-blue-500 mb-6 shadow-lg shadow-blue-500/20" style="background:var(--bg-card);">2</div>
+                    <h3 class="text-xl font-bold mb-2 text-[var(--text-primary)]">Enter Your Vault</h3>
+                    <p class="text-[var(--text-secondary)] text-sm leading-relaxed">If it exists, you're in. If not, we create it instantly. No email, no password reset.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 mx-auto rounded-full border-2 border-blue-500 flex items-center justify-center text-2xl font-extrabold text-blue-500 mb-6 shadow-lg shadow-blue-500/20" style="background:var(--bg-card);">3</div>
+                    <h3 class="text-xl font-bold mb-2 text-[var(--text-primary)]">Start Creating</h3>
+                    <p class="text-[var(--text-secondary)] text-sm leading-relaxed">Write notes, write code, upload files. Everything is saved automatically in real time.</p>
                 </div>
             </div>
         </div>
-    </footer>
+    </div>
+</section>
 
-    <!-- Toast Container -->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+<!-- ═══════════════════════ CTA ════════════════════════════════════════════ -->
+<section id="cta-section" class="py-28 relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-violet-800"></div>
+    <div class="absolute inset-0" style="background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.06) 1px, transparent 0);background-size:36px 36px;"></div>
 
-    <!-- Scripts -->
-    <script src="/js/theme.js"></script>
-    <script src="/js/main.js"></script>
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/80 text-sm mb-6 font-medium">
+            <i class="fa-solid fa-rocket-launch text-xs"></i> Free forever
+        </div>
+        <h2 class="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Ready to enter your vault?</h2>
+        <p class="text-blue-200 text-lg mb-10 max-w-xl mx-auto">No credit card. No sign-up. No tracking. Just pure, private productivity — starting now.</p>
+
+        <div class="max-w-md mx-auto flex items-center bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-1.5 shadow-2xl">
+            <span class="pl-3 text-white/60"><i class="fa-solid fa-lock text-sm"></i></span>
+            <input type="text" id="workspace-code-bottom"
+                   placeholder="Enter a secret code…"
+                   class="flex-1 px-3 py-3 bg-transparent border-none focus:outline-none text-white placeholder-blue-200 text-[15px]">
+            <button id="enter-workspace-btn-bottom"
+                    class="bg-white hover:bg-blue-50 text-blue-700 px-5 py-3 rounded-xl font-bold transition-colors shadow-md flex-shrink-0 text-sm">
+                Open Vault
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ FOOTER ════════════════════════════════════════ -->
+<footer class="pt-20 pb-10 border-t border-[var(--border)]" style="background:var(--bg-card);">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-14">
+            <div class="col-span-2">
+                <div class="flex items-center gap-2.5 mb-5">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg">V</div>
+                    <span class="font-bold text-xl text-[var(--text-primary)]">VaultPad</span>
+                </div>
+                <p class="text-[var(--text-secondary)] max-w-sm leading-relaxed text-sm">A premium, zero-friction workspace for notes, code, and files. Designed for speed, privacy, and simplicity.</p>
+                <div class="flex gap-4 mt-6">
+                    <a href="https://github.com" target="_blank" class="w-9 h-9 rounded-lg border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-colors">
+                        <i class="fa-brands fa-github"></i>
+                    </a>
+                    <a href="#" class="w-9 h-9 rounded-lg border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-colors">
+                        <i class="fa-brands fa-twitter"></i>
+                    </a>
+                </div>
+            </div>
+            <div>
+                <h4 class="font-bold mb-5 text-sm uppercase tracking-wider text-[var(--text-muted)]">Product</h4>
+                <ul class="space-y-3 text-sm">
+                    <li><a href="#features"     class="text-[var(--text-secondary)] hover:text-primary transition-colors">Features</a></li>
+                    <li><a href="#how-it-works" class="text-[var(--text-secondary)] hover:text-primary transition-colors">How it works</a></li>
+                    <li><a href="#cta-section"  class="text-[var(--text-secondary)] hover:text-primary transition-colors">Open Vault</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold mb-5 text-sm uppercase tracking-wider text-[var(--text-muted)]">Connect</h4>
+                <ul class="space-y-3 text-sm">
+                    <li><a href="#" class="text-[var(--text-secondary)] hover:text-primary transition-colors">GitHub</a></li>
+                    <li><a href="#" class="text-[var(--text-secondary)] hover:text-primary transition-colors">Twitter</a></li>
+                    <li><a href="#" class="text-[var(--text-secondary)] hover:text-primary transition-colors">LinkedIn</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="pt-8 border-t border-[var(--border)] flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-[var(--text-muted)] text-sm">© 2026 VaultPad. All rights reserved.</p>
+            <p class="text-[var(--text-muted)] text-sm flex items-center gap-1">
+                Designed with <i class="fa-solid fa-heart text-red-500 mx-1"></i> for productivity
+            </p>
+        </div>
+    </div>
+</footer>
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+<!-- ═══════════════════════ SCRIPTS ═══════════════════════════════════════ -->
+<script>
+// ══════════════════════════════════════════════════════════════
+//  THEME TOGGLE — Self-contained, robust, no external dependency
+// ══════════════════════════════════════════════════════════════
+(function () {
+    'use strict';
+
+    var STORAGE_KEY = 'vp-theme';
+
+    function getTheme() {
+        return localStorage.getItem(STORAGE_KEY) ||
+               (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+    }
+
+    function applyTheme(theme) {
+        var html = document.documentElement;
+        if (theme === 'dark') {
+            html.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+        }
+        html.setAttribute('data-theme', theme);
+        localStorage.setItem(STORAGE_KEY, theme);
+
+        // Update ALL toggle icons
+        document.querySelectorAll('[data-theme-icon]').forEach(function (icon) {
+            icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        });
+    }
+
+    function toggle() {
+        applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
+    }
+
+    // Apply on load (also done in <script> in <head>, this syncs icons after DOM ready)
+    document.addEventListener('DOMContentLoaded', function () {
+        applyTheme(getTheme());
+
+        document.querySelectorAll('[data-theme-btn]').forEach(function (btn) {
+            btn.addEventListener('click', toggle);
+        });
+    });
+
+    // Expose globally so workspace.js can call ThemeManager.setTheme()
+    window.ThemeManager = { setTheme: applyTheme, toggle: toggle, getTheme: getTheme };
+})();
+
+// ══════════════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════════════
+window.showToast = function (message, type) {
+    var container = document.getElementById('toast-container');
+    if (!container) return;
+    var colors = { success:'#22c55e', error:'#ef4444', info:'#3b82f6' };
+    var icons  = { success:'fa-circle-check', error:'fa-circle-exclamation', info:'fa-circle-info' };
+    var t = type || 'info';
+    var toast = document.createElement('div');
+    toast.className = 'toast pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg min-w-[240px]';
+    toast.style.cssText = 'background:var(--bg-card);border-color:var(--border);';
+    toast.innerHTML = '<i class="fa-solid ' + (icons[t]||icons.info) + '" style="color:' + (colors[t]||colors.info) + '"></i>' +
+                      '<span style="font-size:13px;font-weight:500;color:var(--text-primary);flex:1">' + message + '</span>';
+    container.appendChild(toast);
+    setTimeout(function () {
+        toast.style.transition = 'opacity .3s, transform .3s';
+        toast.style.opacity = '0'; toast.style.transform = 'translateY(8px)';
+        setTimeout(function () { toast.remove(); }, 320);
+    }, 3500);
+};
+
+// ══════════════════════════════════════════════════════════════
+//  WORKSPACE ENTRY
+// ══════════════════════════════════════════════════════════════
+async function enterVault(code, btn) {
+    var trimmed = (code || '').trim();
+    if (trimmed.length < 3) {
+        var err = document.getElementById('workspace-error');
+        if (err) { err.classList.remove('hidden'); setTimeout(function(){ err.classList.add('hidden'); }, 3000); }
+        return;
+    }
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Entering…';
+    btn.disabled = true;
+
+    try {
+        var res  = await fetch('/api/workspace/enter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: trimmed })
+        });
+        var data = await res.json();
+        if (data.success) {
+            showToast(data.data.isNew ? '🎉 New vault created!' : '✅ Welcome back!', 'success');
+            setTimeout(function () { window.location.href = '/workspace/' + data.data.workspaceId; }, 600);
+        } else {
+            throw new Error(data.message || 'Failed');
+        }
+    } catch (e) {
+        btn.innerHTML = orig; btn.disabled = false;
+        showToast(e.message || 'Could not connect. Try again.', 'error');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Hero entry
+    var hi = document.getElementById('workspace-code');
+    var hb = document.getElementById('enter-workspace-btn');
+    if (hb) hb.addEventListener('click', function(){ enterVault(hi.value, hb); });
+    if (hi) hi.addEventListener('keypress', function(e){ if(e.key==='Enter') enterVault(hi.value, hb); });
+
+    // CTA entry
+    var ci = document.getElementById('workspace-code-bottom');
+    var cb = document.getElementById('enter-workspace-btn-bottom');
+    if (cb) cb.addEventListener('click', function(){ enterVault(ci.value, cb); });
+    if (ci) ci.addEventListener('keypress', function(e){ if(e.key==='Enter') enterVault(ci.value, cb); });
+
+    // Navbar scroll shadow
+    var nav = document.getElementById('navbar');
+    window.addEventListener('scroll', function() {
+        nav && nav.classList.toggle('scrolled', window.scrollY > 12);
+    });
+
+    // Feature card scroll reveal
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity  = '1';
+                entry.target.style.transform = 'translateY(0)';
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.feature-card').forEach(function(card, i) {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(32px)';
+        card.style.transition = 'opacity .55s ease ' + (i * 0.07) + 's, transform .55s ease ' + (i * 0.07) + 's, box-shadow .3s !important';
+        observer.observe(card);
+    });
+});
+</script>
 </body>
 </html>
