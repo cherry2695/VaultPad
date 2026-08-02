@@ -35,7 +35,8 @@ app.set('trust proxy', 1);
 // ── Security Headers ──────────────────────────────────────────────────────────
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+  // SAMEORIGIN allows /uploads PDFs to be previewed in iframes on the same origin
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   next();
 });
@@ -93,6 +94,7 @@ app.use('/uploads', (req, res, next) => {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/', require('./routes/auth'));       // Google OAuth routes
+app.use('/', require('./routes/user'));       // User profile API
 app.use('/', require('./routes/index'));
 app.use('/', require('./routes/workspace'));
 app.use('/', require('./routes/notes'));

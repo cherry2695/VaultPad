@@ -398,26 +398,77 @@ window.FileManager = {
     }, 300);
   },
 
-  // ── PDF Preview ──────────────────────────────────────────
-  openPdfPreview(file) {
+
+  // ── PDF Preview (blob URL — bypasses X-Frame-Options completely) ──
+  async openPdfPreview(file) {
+    const fileName = this.esc(file.displayName || file.originalName);
+
+    // Create modal with loading state first
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4';
     modal.innerHTML = `
-      <div class="bg-white w-full max-w-5xl h-[85vh] rounded-xl overflow-hidden flex flex-col shadow-2xl">
-        <div class="p-3 bg-gray-100 flex justify-between items-center border-b shrink-0">
-          <span class="font-medium text-gray-800 text-sm truncate">${this.esc(file.displayName || file.originalName)}</span>
+      <div class="bg-[var(--bg-card)] w-full max-w-5xl h-[88vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl border border-[var(--border)]">
+        <div class="px-4 py-3 bg-[var(--bg-sidebar)] flex justify-between items-center border-b border-[var(--border)] shrink-0">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-file-pdf text-red-500"></i>
+            <span class="font-semibold text-[var(--text-primary)] text-sm truncate max-w-[280px]">${fileName}</span>
+          </div>
           <div class="flex gap-2">
-            <a href="/api/files/${file._id}/download" class="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors">Download</a>
-            <button class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300 transition-colors close-pdf">Close</button>
+            <a href="/api/files/${file._id}/download" download class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5">
+              <i class="fa-solid fa-download text-xs"></i> Download
+            </a>
+            <button class="px-3 py-1.5 bg-[var(--bg-main)] hover:bg-[var(--border)] text-[var(--text-secondary)] rounded-lg text-sm font-medium transition-colors border border-[var(--border)] close-pdf">
+              <i class="fa-solid fa-xmark"></i> Close
+            </button>
           </div>
         </div>
-        <iframe src="/uploads/${file.storedName}" class="flex-1 w-full border-0" title="PDF Preview"></iframe>
+        <div id="pdf-loader" class="flex-1 flex flex-col items-center justify-center gap-3 text-[var(--text-secondary)]">
+          <i class="fa-solid fa-circle-notch fa-spin text-2xl text-blue-500"></i>
+          <span class="text-sm">Loading PDF…</span>
+        </div>
+        <iframe id="pdf-frame" class="flex-1 w-full border-0 hidden" title="PDF Preview"></iframe>
       </div>
     `;
     document.body.appendChild(modal);
-    modal.querySelector('.close-pdf')?.addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+    // Close handlers
+    const close = () => { modal.remove(); };
+    modal.querySelector('.close-pdf')?.addEventListener('click', close);
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+    // Fetch as blob → create local URL (no X-Frame-Options applies to blob:)
+    try {
+      const resp = await fetch(`/api/files/${file._id}/download`);
+      if (!resp.ok) throw new Error('Download failed');
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const frame  = modal.querySelector('#pdf-frame');
+      const loader = modal.querySelector('#pdf-loader');
+
+      frame.src = blobUrl;
+      frame.onload = () => {
+        loader.remove();
+        frame.classList.remove('hidden');
+      };
+      // Clean up blob URL when modal is removed
+      const obs = new MutationObserver(() => {
+        if (!document.body.contains(modal)) {
+          URL.revokeObjectURL(blobUrl);
+          obs.disconnect();
+        }
+      });
+      obs.observe(document.body, { childList: true });
+    } catch (err) {
+      modal.querySelector('#pdf-loader').innerHTML = `
+        <i class="fa-solid fa-triangle-exclamation text-2xl text-amber-500"></i>
+        <p class="text-sm text-[var(--text-secondary)]">Could not load PDF preview.</p>
+        <a href="/api/files/${file._id}/download" class="text-sm text-blue-500 hover:underline font-medium">
+          <i class="fa-solid fa-download mr-1"></i>Download instead
+        </a>`;
+    }
   },
+
 
   // ── Helpers ──────────────────────────────────────────────
   formatSize(bytes) {

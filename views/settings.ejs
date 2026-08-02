@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings | VaultPad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };
+    </script>
+    <link rel="stylesheet" href="/css/custom.css">
+    <style>
+        :root {
+            --bg-main:#F0F4FF; --bg-card:#FFFFFF; --bg-sidebar:#F8FAFF;
+            --text-primary:#0F172A; --text-secondary:#475569; --text-muted:#94A3B8;
+            --border:#E2E8F0; --primary:#2563EB;
+        }
+        html.dark {
+            --bg-main:#0A0F1E; --bg-card:#111827; --bg-sidebar:#0D1526;
+            --text-primary:#F1F5F9; --text-secondary:#94A3B8; --text-muted:#64748B;
+            --border:#1E293B;
+        }
+        *, *::before, *::after { transition: background-color .3s ease, border-color .3s ease, color .2s ease; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(--text-primary); min-height: 100vh; }
+        input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 1000px var(--bg-card) inset !important;
+            -webkit-text-fill-color: var(--text-primary) !important;
+        }
+        .settings-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.75rem; }
+        .field-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+        .field-input {
+            width: 100%; background: var(--bg-main); border: 1.5px solid var(--border);
+            border-radius: 10px; padding: 10px 14px; font-size: 14px;
+            color: var(--text-primary); outline: none; font-family: 'Inter', sans-serif;
+        }
+        .field-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+        .field-input:disabled { opacity: .55; cursor: not-allowed; }
+        .btn-primary { background: #2563EB; color: #fff; border: none; border-radius: 10px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-danger  { background: transparent; color: #ef4444; border: 1.5px solid #ef4444; border-radius: 10px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
+        .btn-danger:hover  { background: #ef4444; color: #fff; }
+        .theme-option { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--border); cursor: pointer; transition: all .2s; }
+        .theme-option.active { border-color: var(--primary); background: rgba(37,99,235,.07); }
+        .theme-option:hover:not(.active) { border-color: var(--text-muted); }
+        .avatar-ring { box-shadow: 0 0 0 3px var(--primary), 0 0 0 6px rgba(37,99,235,.15); }
+    </style>
+</head>
+
+<!-- Apply theme before paint -->
+<script>
+    (function(){
+        var s = localStorage.getItem('vp-theme');
+        var sys = window.matchMedia('(prefers-color-scheme:dark)').matches;
+        var t = s || (sys ? 'dark' : 'light');
+        if(t==='dark') document.documentElement.classList.add('dark');
+    })();
+</script>
+
+<body class="antialiased">
+
+<!-- ── Navbar ─────────────────────────────────────────────────────────────── -->
+<nav class="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800" style="box-shadow:0 1px 4px rgba(0,0,0,.06);">
+    <div class="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <a href="/" class="flex items-center gap-2 text-[var(--text-primary)] hover:text-primary transition-colors">
+                <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-sm">V</div>
+                <span class="font-bold text-[17px] tracking-tight text-slate-900 dark:text-white">VaultPad</span>
+            </a>
+            <span class="text-[var(--text-muted)] text-sm hidden sm:block">/ Settings</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="theme-toggle-settings" class="w-9 h-9 rounded-full flex items-center justify-center border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors" aria-label="Toggle theme">
+                <i id="settings-theme-icon" class="fa-solid fa-moon text-sm"></i>
+            </button>
+            <a href="/" class="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium transition-colors flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left text-xs"></i> Back
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- ── Main Content ───────────────────────────────────────────────────────── -->
+<main class="max-w-3xl mx-auto px-4 py-10">
+
+    <!-- Page header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-extrabold text-[var(--text-primary)] mb-1">Settings</h1>
+        <p class="text-[var(--text-secondary)] text-sm">Manage your profile, preferences, and account.</p>
+    </div>
+
+    <div class="space-y-6">
+
+        <!-- ── Profile Card ────────────────────────────────────────────── -->
+        <div class="settings-card">
+            <h2 class="text-base font-bold text-[var(--text-primary)] mb-5 flex items-center gap-2">
+                <i class="fa-solid fa-user text-blue-500 text-sm"></i> Profile
+            </h2>
+
+            <!-- Avatar -->
+            <div class="flex items-start gap-6 mb-6 pb-6 border-b border-[var(--border)]">
+                <div class="relative shrink-0">
+                    <% if (locals.user && user.avatar) { %>
+                    <img id="avatar-preview"
+                         src="<%= user.avatar %>"
+                         alt="<%= user.displayName %>"
+                         class="w-20 h-20 rounded-full object-cover avatar-ring"
+                         onerror="this.src=''; this.classList.add('hidden'); document.getElementById('avatar-fallback').classList.remove('hidden');">
+                    <div id="avatar-fallback" class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold avatar-ring hidden">
+                        <%= user.firstName ? user.firstName[0].toUpperCase() : 'U' %>
+                    </div>
+                    <% } else { %>
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold avatar-ring">
+                        <%= (locals.user && user.firstName) ? user.firstName[0].toUpperCase() : 'U' %>
+                    </div>
+                    <% } %>
+                    <label for="avatar-upload" class="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors shadow-md" title="Change photo">
+                        <i class="fa-solid fa-camera text-white text-xs"></i>
+                    </label>
+                    <input type="file" id="avatar-upload" accept="image/*" class="hidden">
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-semibold text-[var(--text-primary)] mb-0.5">Profile Photo</p>
+                    <p class="text-xs text-[var(--text-muted)] mb-3">JPG, PNG or WebP. Max 5MB. Click the camera icon to change.</p>
+                    <div id="avatar-status" class="hidden text-xs font-medium"></div>
+                </div>
+            </div>
+
+            <!-- Name fields -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="field-label">Display Name</label>
+                    <input type="text" id="display-name" class="field-input"
+                           value="<%= (locals.user && user.displayName) ? user.displayName : '' %>"
+                           placeholder="Your full name" maxlength="80" autocomplete="name">
+                </div>
+                <div>
+                    <label class="field-label">First Name</label>
+                    <input type="text" id="first-name" class="field-input"
+                           value="<%= (locals.user && user.firstName) ? user.firstName : '' %>"
+                           placeholder="First name" maxlength="50" autocomplete="given-name">
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <label class="field-label">Email Address</label>
+                <div class="relative">
+                    <input type="email" class="field-input pr-10"
+                           value="<%= (locals.user && user.email) ? user.email : '' %>"
+                           disabled autocomplete="email">
+                    <i class="fa-solid fa-lock absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)]"></i>
+                </div>
+                <p class="text-xs text-[var(--text-muted)] mt-1.5">Email is managed by your Google account and cannot be changed here.</p>
+            </div>
+
+            <div class="flex justify-end">
+                <button id="save-profile-btn" class="btn-primary flex items-center gap-2">
+                    <i class="fa-solid fa-floppy-disk text-xs"></i> Save Changes
+                </button>
+            </div>
+        </div>
+
+        <!-- ── Google Account Card ─────────────────────────────────────── -->
+        <div class="settings-card">
+            <h2 class="text-base font-bold text-[var(--text-primary)] mb-5 flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Google Account
+            </h2>
+            <% if (locals.user) { %>
+            <div class="flex items-center gap-4 p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border)]">
+                <% if (user.avatar) { %>
+                <img src="<%= user.avatar %>" alt="" class="w-12 h-12 rounded-full object-cover">
+                <% } else { %>
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
+                    <%= user.firstName ? user.firstName[0].toUpperCase() : 'U' %>
+                </div>
+                <% } %>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-[var(--text-primary)] truncate"><%= user.displayName %></p>
+                    <p class="text-sm text-[var(--text-muted)] truncate"><%= user.email %></p>
+                </div>
+                <div class="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 flex items-center gap-1.5 shrink-0">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Connected
+                </div>
+            </div>
+            <% } else { %>
+            <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm text-amber-700 dark:text-amber-400">
+                <i class="fa-solid fa-triangle-exclamation mr-1"></i> Not signed in. <a href="/auth/google" class="font-semibold underline">Sign in with Google</a>
+            </div>
+            <% } %>
+        </div>
+
+        <!-- ── Theme Card ──────────────────────────────────────────────── -->
+        <div class="settings-card">
+            <h2 class="text-base font-bold text-[var(--text-primary)] mb-5 flex items-center gap-2">
+                <i class="fa-solid fa-palette text-purple-500 text-sm"></i> Appearance
+            </h2>
+            <div class="grid grid-cols-3 gap-3" id="theme-options">
+                <div class="theme-option" data-theme="light" id="theme-light">
+                    <i class="fa-solid fa-sun text-amber-500"></i>
+                    <div>
+                        <p class="text-sm font-semibold text-[var(--text-primary)]">Light</p>
+                        <p class="text-xs text-[var(--text-muted)]">Always light</p>
+                    </div>
+                </div>
+                <div class="theme-option" data-theme="dark" id="theme-dark">
+                    <i class="fa-solid fa-moon text-indigo-500"></i>
+                    <div>
+                        <p class="text-sm font-semibold text-[var(--text-primary)]">Dark</p>
+                        <p class="text-xs text-[var(--text-muted)]">Always dark</p>
+                    </div>
+                </div>
+                <div class="theme-option" data-theme="system" id="theme-system">
+                    <i class="fa-solid fa-laptop text-slate-500"></i>
+                    <div>
+                        <p class="text-sm font-semibold text-[var(--text-primary)]">System</p>
+                        <p class="text-xs text-[var(--text-muted)]">Follow OS</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Account Actions Card ────────────────────────────────────── -->
+        <div class="settings-card">
+            <h2 class="text-base font-bold text-[var(--text-primary)] mb-5 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-red-500 text-sm"></i> Account
+            </h2>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border)]">
+                <div>
+                    <p class="text-sm font-semibold text-[var(--text-primary)] mb-0.5">Sign Out</p>
+                    <p class="text-xs text-[var(--text-muted)]">You'll need to sign in again with Google to access your vaults.</p>
+                </div>
+                <form action="/auth/logout" method="POST" class="shrink-0">
+                    <button type="submit" class="btn-danger flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i> Sign Out
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div><!-- end space-y-6 -->
+</main>
+
+<!-- ── Toast Container ─────────────────────────────────────────────────────── -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+<script>
+// ── Theme logic ───────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'vp-theme';
+function getTheme() {
+    return localStorage.getItem(STORAGE_KEY) ||
+           (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+}
+function applyTheme(theme) {
+    const isActuallyDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme:dark)').matches);
+    document.documentElement.classList.toggle('dark', isActuallyDark);
+    localStorage.setItem(STORAGE_KEY, theme === 'system' ? (isActuallyDark ? 'dark' : 'light') : theme);
+    const icon = document.getElementById('settings-theme-icon');
+    if(icon) icon.className = isActuallyDark ? 'fa-solid fa-sun text-sm' : 'fa-solid fa-moon text-sm';
+    // Update theme options active state
+    document.querySelectorAll('.theme-option').forEach(el => {
+        el.classList.toggle('active', el.dataset.theme === theme);
+    });
+}
+
+// Init
+applyTheme(getTheme());
+
+// Theme toggle button
+document.getElementById('theme-toggle-settings')?.addEventListener('click', () => {
+    const next = getTheme() === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+});
+
+// Theme option cards
+document.querySelectorAll('.theme-option').forEach(el => {
+    el.addEventListener('click', () => applyTheme(el.dataset.theme));
+});
+
+// Set system as default active if no stored pref
+const stored = localStorage.getItem(STORAGE_KEY);
+if (!stored) document.getElementById('theme-system')?.classList.add('active');
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(message, type) {
+    const colors = { success:'#22c55e', error:'#ef4444', info:'#3b82f6' };
+    const icons  = { success:'fa-circle-check', error:'fa-circle-exclamation', info:'fa-circle-info' };
+    const t = type || 'info';
+    const toast = document.createElement('div');
+    toast.className = 'pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg min-w-[240px] opacity-0 translate-y-2';
+    toast.style.cssText = 'background:var(--bg-card);border-color:var(--border);transition:opacity .3s,transform .3s;';
+    toast.innerHTML = `<i class="fa-solid ${icons[t]}" style="color:${colors[t]}"></i><span style="font-size:13px;font-weight:500;color:var(--text-primary);flex:1">${message}</span>`;
+    document.getElementById('toast-container').appendChild(toast);
+    requestAnimationFrame(() => { toast.classList.remove('opacity-0','translate-y-2'); });
+    setTimeout(() => {
+        toast.style.opacity='0'; toast.style.transform='translateY(8px)';
+        setTimeout(() => toast.remove(), 320);
+    }, 3500);
+}
+
+// ── Avatar upload ─────────────────────────────────────────────────────────────
+document.getElementById('avatar-upload')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB', 'error'); return; }
+
+    const status = document.getElementById('avatar-status');
+    status.className = 'text-xs font-medium text-blue-500';
+    status.textContent = 'Uploading…';
+    status.classList.remove('hidden');
+
+    // Preview immediately
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const preview = document.getElementById('avatar-preview');
+        if (preview) { preview.src = ev.target.result; preview.classList.remove('hidden'); }
+        const fallback = document.getElementById('avatar-fallback');
+        if (fallback) fallback.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    try {
+        const fd = new FormData();
+        fd.append('avatar', file);
+        const res = await fetch('/api/user/avatar', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+            status.className = 'text-xs font-medium text-green-600';
+            status.textContent = '✓ Photo updated!';
+            showToast('Profile photo updated!', 'success');
+        } else throw new Error(data.message);
+    } catch (err) {
+        status.className = 'text-xs font-medium text-red-500';
+        status.textContent = err.message || 'Upload failed';
+        showToast('Could not upload photo. ' + (err.message || ''), 'error');
+    }
+});
+
+// ── Save profile ──────────────────────────────────────────────────────────────
+document.getElementById('save-profile-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('save-profile-btn');
+    const displayName = document.getElementById('display-name')?.value.trim();
+    const firstName   = document.getElementById('first-name')?.value.trim();
+
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-xs"></i> Saving…';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/user/profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ displayName, firstName }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Profile saved successfully!', 'success');
+        } else throw new Error(data.message);
+    } catch (err) {
+        showToast(err.message || 'Could not save profile.', 'error');
+    } finally {
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk text-xs"></i> Save Changes';
+        btn.disabled = false;
+    }
+});
+</script>
+</body>
+</html>
