@@ -1,150 +1,122 @@
-# 🔐 VaultPad — Secure Digital Workspace
+# 🔐 VaultPad – Secure Code & File Storage Platform
 
-A premium, zero-registration private workspace for notes, code snippets, and media files. Built with Node.js, Express, MongoDB, and EJS.
+<div align="center">
 
----
+![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=node.js)
+![Express.js](https://img.shields.io/badge/Express.js-Backend-000000?style=for-the-badge&logo=express)
+![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb)
+![Passport.js](https://img.shields.io/badge/Passport.js-Authentication-34E27A?style=for-the-badge)
+![EJS](https://img.shields.io/badge/EJS-Template_Engine-B4CA65?style=for-the-badge)
 
-## 🚀 Quick Start (Local Development)
+### A Secure Platform to Store Files, Images, and Code Snippets
 
-### Prerequisites
-- Node.js 18+
-- MongoDB Atlas account (free tier works)
-
-### Install & Run
-
-```bash
-git clone <your-repo-url>
-cd VaultPad
-npm install
-# Edit .env with your MongoDB URI
-npm run dev
-```
-
-Open [http://localhost:8050](http://localhost:8050)
+</div>
 
 ---
 
-## 🌐 Deploy to Render (Production)
+# 📖 Overview
 
-### Step 1: Push to GitHub
+VaultPad is a secure web application that allows users to store, organize, and manage their important files and code snippets in one place.
 
-```bash
-git init
-git add .
-git commit -m "Initial VaultPad commit"
-git remote add origin https://github.com/YOUR_USERNAME/vaultpad.git
-git push -u origin main
-```
-
-> **Important:** The `.gitignore` excludes `.env` and `node_modules/`. Never commit your `.env` file.
-
-### Step 2: Create Render Web Service
-
-1. Go to [https://dashboard.render.com](https://dashboard.render.com)
-2. Click **New → Web Service**
-3. Connect your GitHub repo
-4. Configure:
-   - **Name:** `vaultpad`
-   - **Region:** Oregon (US West)
-   - **Branch:** `main`
-   - **Runtime:** Node
-   - **Build Command:** `npm install`
-   - **Start Command:** `node app.js`
-   - **Plan:** Free (or Starter for production)
-
-### Step 3: Set Environment Variables in Render
-
-In your Render service dashboard → **Environment** tab, add:
-
-| Key | Value |
-|-----|-------|
-| `NODE_ENV` | `production` |
-| `PORT` | `8050` |
-| `MONGODB_URI` | `mongodb+srv://chanikya_95:chanikya_95@cluster95.7r87fvj.mongodb.net/vaultpad?appName=Cluster95` |
-
-### Step 4: Configure MongoDB Atlas
-
-Allow Render's IP addresses in MongoDB Atlas:
-1. Go to Atlas → Network Access
-2. Click **Add IP Address**
-3. Click **Allow Access from Anywhere** (0.0.0.0/0) for simplicity
-4. (Optional: Add Render static IPs for better security on paid plans)
-
-### Step 5: Deploy
-
-Click **Deploy** — Render will:
-1. Clone your repo
-2. Run `npm install`
-3. Start with `node app.js`
-4. Health-check the `/` endpoint
-
-Your app will be live at: `https://vaultpad.onrender.com` (or similar)
+The platform provides secure user authentication, personal storage, image processing, and an intuitive dashboard for managing uploaded content. Every user's data remains isolated and protected through authenticated sessions.
 
 ---
 
-## 📁 Project Structure
+# ✨ Features
+
+## 🔐 Authentication
+
+- User Registration
+- Secure Login
+- Logout
+- Google OAuth Login
+- Password Hashing using bcrypt
+- Session-based Authentication
+
+---
+
+## 📂 File Management
+
+- Upload Files
+- Download Files
+- Delete Files
+- View Uploaded Files
+- Personal File Storage
+
+---
+
+## 🖼 Image Handling
+
+- Image Upload
+- Image Optimization using Sharp
+- Profile Picture Support
+
+---
+
+## 💻 Code Storage
+
+- Save Code Snippets
+- View Saved Snippets
+- Edit Snippets
+- Delete Snippets
+- Organize Development Notes
+
+---
+
+## 👤 User Dashboard
+
+- Personalized Dashboard
+- Recent Uploads
+- User-specific Data
+- Easy Navigation
+
+---
+
+# 🛠 Tech Stack
+
+## Frontend
+
+* EJS, HTML5, CSS3, Javascript
+
+## Backend
+
+* Node.js, Express.js
+
+## Database
+
+* MongoDB, Mongoose
+
+## Authentication
+
+* Passport.js, Google OAuth 2.0, Express Session
+
+## File Handling
+
+* Multer, Sharp
+
+---
+
+# 📁 Project Structure
 
 ```
-VaultPad/
-├── app.js                    # Express entry point
+VaultPad
+│
+├── app.js
+├── package.json
 ├── config/
-│   └── database.js           # MongoDB connection
 ├── controllers/
-│   ├── workspaceController.js # Workspace entry/settings
-│   ├── noteController.js      # Note CRUD + versioning
-│   ├── fileController.js      # File upload/download/delete
-│   ├── searchController.js    # Global search
-│   └── trashController.js     # Soft-delete management
-├── database/
-│   └── indexes.js             # MongoDB index creation
 ├── middleware/
-│   ├── errorHandler.js        # Centralized error handling
-│   ├── uploadMiddleware.js    # Multer dynamic upload
-│   └── validateRequest.js     # express-validator chains
 ├── models/
-│   ├── Workspace.js           # Workspace schema
-│   ├── Note.js                # Note + version history schema
-│   ├── File.js                # File metadata schema
-│   └── ActivityLog.js         # TTL-based activity log
-├── routes/
-│   ├── index.js               # Landing page
-│   ├── workspace.js           # Workspace API
-│   ├── notes.js               # Notes API
-│   ├── files.js               # Files API
-│   ├── search.js              # Search API
-│   └── trash.js               # Trash API
-├── utils/
-│   ├── hashUtils.js           # bcrypt + SHA-256 hashing
-│   ├── fileUtils.js           # File validation/sizing
-│   └── responseUtils.js       # Standardized JSON responses
 ├── public/
-│   ├── css/custom.css         # Theme + animations
-│   └── js/
-│       ├── theme.js           # Theme FOUC prevention
-│       ├── main.js            # Landing page logic
-│       ├── workspace.js       # Workspace orchestrator
-│       ├── editor.js          # Note/code editor
-│       ├── fileManager.js     # File upload/grid/list
-│       └── search.js          # Global search
+│   ├── css/
+│   ├── js/
+│   ├── uploads/
+│   └── images/
+├── routes/
 ├── views/
-│   ├── index.ejs              # Landing page
-│   └── workspace.ejs          # Workspace dashboard
-├── uploads/                   # Auto-created on server start
-├── .env                       # Local env (not committed)
-├── .gitignore
-├── render.yaml                # Render deployment config
-└── package.json
+├── utils/
+└── README.md
 ```
-
----
-
-## 🔑 Security Model
-
-- **Workspace codes** are never stored in plaintext
-- **SHA-256** hash used for O(1) lookup (deterministic)
-- **bcrypt** (salt factor 12) stored separately for verification
-- **Path traversal prevention** on all file downloads
-- **Soft deletes** — files remain in database until explicitly purged
 
 ---
 
@@ -162,35 +134,69 @@ VaultPad/
 
 ---
 
-## 📝 Version History
+# 🔒 Security Features
 
-- Last **20 versions** retained per note
-- Version saved when content changes by **>50 characters** OR **>5 minutes** since last save
-- Full restore with one click; current content saved as a version before restoring
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Runtime | Node.js 18+ |
-| Framework | Express 4 |
-| Database | MongoDB Atlas (Mongoose 8) |
-| Templating | EJS |
-| File Upload | Multer |
-| Image Optimization | Sharp |
-| Password Hashing | bcryptjs (factor 12) |
-| Validation | express-validator |
-| Frontend Styling | Tailwind CSS (CDN) + Custom CSS |
-| Fonts | Inter + JetBrains Mono |
-| Icons | Font Awesome 6 |
-| Syntax Highlighting | Highlight.js |
+- Password Encryption using bcrypt
+- Secure Sessions
+- Google OAuth Authentication
+- User-specific Data Isolation
+- Input Validation
+- Protected Routes
 
 ---
 
-## ⚠️ Important Notes for Render
+# 📸 Screenshots
 
-- **Uploads folder**: Render's free tier has **ephemeral storage** — uploaded files will be lost on redeploy/restart. For production, use [Render Disk](https://render.com/docs/disks) ($0.25/GB/month) or integrate AWS S3/Cloudinary.
-- **Free tier sleep**: Free Render services sleep after 15 minutes of inactivity. The first request after sleep takes ~30 seconds.
-- **MongoDB Network**: Make sure to allowlist `0.0.0.0/0` in MongoDB Atlas for Render's dynamic IPs.
+### 🏠 Home Page
+
+<p align="center">
+  <img src="public/img/VaultPad_Home.png" alt="VaultPad Home" width="100%">
+</p>
+
+---
+
+### 🔒 Secure Vault
+
+<p align="center">
+  <img src="public/img/Security.png" alt="Security" width="100%">
+</p>
+
+---
+
+### ☕ Java Workspace
+
+<p align="center">
+  <img src="public/img/VaultPad_JavaWorkspace.png" alt="Java Workspace" width="100%">
+</p>
+
+---
+
+### 📄 PDF Workspace
+
+<p align="center">
+  <img src="public/img/VaultPad_PdfWorkspace.png" alt="PDF Workspace" width="100%">
+</p>
+
+---
+
+### 🖼 Image Workspace
+
+<p align="center">
+  <img src="public/img/VaultPad_ImageWorkspace.png" alt="Image Workspace" width="100%">
+</p>
+
+---
+
+### 💻 Code Vault
+
+<p align="center">
+  <img src="public/img/VaultPad_CodeVault.png" alt="Code Vault" width="100%">
+</p>
+
+---
+
+</div>
+
+## 🌐 Live Demo
+
+**🔗 Live Website:** https://vaultpad-secure-code-file-storage.onrender.com/
