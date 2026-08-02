@@ -2,16 +2,33 @@ const express  = require('express');
 const passport = require('passport');
 const router   = express.Router();
 
+// ── Helper: check if Google OAuth is actually configured ──────
+function isOAuthConfigured() {
+  const id  = process.env.GOOGLE_CLIENT_ID  || '';
+  const sec = process.env.GOOGLE_CLIENT_SECRET || '';
+  return id.length > 10 &&
+    !id.includes('YOUR_GOOGLE_CLIENT_ID') &&
+    sec.length > 10 &&
+    !sec.includes('YOUR_GOOGLE_CLIENT_SECRET');
+}
+
 // ── Kick off Google OAuth ─────────────────────────────────────
-router.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+router.get('/auth/google', (req, res, next) => {
+  if (!isOAuthConfigured()) {
+    // Credentials not set → send back to landing page with a clear message
+    return res.redirect('/?auth=not-configured');
+  }
+  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
 
 // ── Google callback ───────────────────────────────────────────
 router.get('/auth/google/callback',
+  (req, res, next) => {
+    if (!isOAuthConfigured()) return res.redirect('/?auth=not-configured');
+    next();
+  },
   passport.authenticate('google', { failureRedirect: '/?auth=failed' }),
   (req, res) => {
-    // Successful auth — go back to landing page (they'll enter a code)
     res.redirect('/?auth=success');
   }
 );
@@ -24,7 +41,7 @@ router.post('/auth/logout', (req, res, next) => {
   });
 });
 
-// ── Current user (JSON, used by client JS) ────────────────────
+// ── Current user JSON ─────────────────────────────────────────
 router.get('/auth/me', (req, res) => {
   if (!req.user) return res.json({ loggedIn: false, user: null });
   res.json({
@@ -36,6 +53,11 @@ router.get('/auth/me', (req, res) => {
       avatar:      req.user.avatar,
     },
   });
+});
+
+// ── OAuth status (used by landing page JS) ────────────────────
+router.get('/auth/status', (req, res) => {
+  res.json({ configured: isOAuthConfigured(), loggedIn: !!req.user });
 });
 
 module.exports = router;
