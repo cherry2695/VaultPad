@@ -15,15 +15,14 @@ services:
         value: production
       - key: PORT
         value: 10000
-      # ── Set these in the Render dashboard (Dashboard → Service → Environment) ──
-      - key: MONGODB_URI
-        sync: false
       - key: GOOGLE_CLIENT_ID
+        value: 234820566115-jfs0kiae3pf0pqbalcpnqt8hklmm1ml4.apps.googleusercontent.com
+      - key: GOOGLE_CALLBACK_URL
+        value: https://vaultpad-secure-code-file-storage-platform.onrender.com/auth/google/callback
+      # ── Set these in Render Dashboard → Environment (never commit secrets) ──
+      - key: MONGODB_URI
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: SESSION_SECRET
         sync: false
-      # ── Change this to your actual Render URL after first deploy ──────────────
-      - key: GOOGLE_CALLBACK_URL
-        value: https://vaultpad.onrender.com/auth/google/callback
