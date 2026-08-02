@@ -10,17 +10,27 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["workspace", "notes", "secure", "private", "saas"],
+  "keywords": [
+    "workspace",
+    "notes",
+    "secure",
+    "private",
+    "saas"
+  ],
   "author": "VaultPad",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "connect-mongo": "^6.0.0",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
+    "express-session": "^1.19.0",
     "express-validator": "^7.1.0",
     "mongoose": "^8.4.1",
     "multer": "^1.4.5-lts.1",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "sharp": "^0.33.4",
     "uuid": "^10.0.0"
   },
